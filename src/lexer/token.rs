@@ -1,4 +1,5 @@
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub enum Token {
     Integer(i64),
     Float(f64),

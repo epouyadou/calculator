@@ -105,3 +105,82 @@ impl<'a> Parser<'a> {
         self.parse_addition()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Lexer;
+    use crate::parser::expr::Expr;
+    use crate::lexer::token::Token;
+
+    // Helper to keep tests clean
+    fn parse_to_ast(input: &str) -> Box<Expr> {
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        parser.parse().expect("Failed to parse expression")
+    }
+
+    #[test]
+    fn test_precedence_multiplication() {
+        // 1 + 2 * 3 should be 1 + (2 * 3)
+        let ast = parse_to_ast("1 + 2 * 3");
+
+        if let Expr::Binary { left, op, right } = *ast {
+            assert_eq!(op, Token::Plus);
+            assert!(matches!(*left, Expr::Int(1)));
+
+            if let Expr::Binary { op: op_inner, .. } = *right {
+                assert_eq!(op_inner, Token::Star);
+            } else {
+                panic!("Right side should be a multiplication binary expression");
+            }
+        } else {
+            panic!("Root should be an addition binary expression");
+        }
+    }
+
+    #[test]
+    fn test_implicit_multiplication() {
+        // 2(3 + 4) should parse as 2 * (3 + 4)
+        let ast = parse_to_ast("2(3 + 4)");
+
+        match *ast {
+            Expr::Binary { op, .. } => assert_eq!(op, Token::Star),
+            _ => panic!("Expected implicit multiplication to be a Star binary expression"),
+        }
+    }
+
+    #[test]
+    fn test_unary_negative() {
+        let ast = parse_to_ast("-5");
+        match *ast {
+            Expr::Unary { op, .. } => assert_eq!(op, Token::Minus),
+            _ => panic!("Expected unary minus expression"),
+        }
+    }
+
+    #[test]
+    fn test_grouping() {
+        let ast = parse_to_ast("(1 + 2)");
+        assert!(matches!(*ast, Expr::Grouping(_)));
+    }
+
+    #[test]
+    fn test_error_missing_paren() {
+        let lexer = Lexer::new("(1 + 2");
+        let mut parser = Parser::new(lexer);
+        let result = parser.parse();
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), ParseError::MissingClosingParenthesis);
+    }
+
+    #[test]
+    fn test_empty_input() {
+        let lexer = Lexer::new("");
+        let mut parser = Parser::new(lexer);
+        let result = parser.parse();
+
+        assert!(matches!(result, Err(ParseError::Empty)));
+    }
+}

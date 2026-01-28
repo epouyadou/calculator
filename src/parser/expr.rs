@@ -1,6 +1,7 @@
 use crate::lexer::token::Token;
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub enum Expr {
     Int(i64),
     Float(f64),

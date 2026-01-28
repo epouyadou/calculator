@@ -98,3 +98,81 @@ impl<'a> Lexer<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::token::Token;
+
+    #[test]
+    fn test_basic_arithmetic_tokens() {
+        let input = "1 + 2 * (3 / 4) - 5";
+        let mut lexer = Lexer::new(input);
+
+        let expected = vec![
+            Token::Integer(1),
+            Token::Plus,
+            Token::Integer(2),
+            Token::Star,
+            Token::LeftParen,
+            Token::Integer(3),
+            Token::Slash,
+            Token::Integer(4),
+            Token::RightParen,
+            Token::Minus,
+            Token::Integer(5),
+            Token::EOF,
+        ];
+
+        for token in expected {
+            let next = lexer.next_token();
+            assert_eq!(next, token);
+        }
+    }
+
+    #[test]
+    fn test_floats_and_decimals() {
+        let input = "10.5 + 0.75";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(lexer.next_token(), Token::Float(10.5));
+        assert_eq!(lexer.next_token(), Token::Plus);
+        assert_eq!(lexer.next_token(), Token::Float(0.75));
+        assert_eq!(lexer.next_token(), Token::EOF);
+    }
+
+    #[test]
+    fn test_implicit_multiplication_lexing() {
+        // The lexer doesn't "know" it's implicit multiplication,
+        // it just needs to see the tokens correctly for the parser.
+        let input = "2(3)";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(lexer.next_token(), Token::Integer(2));
+        assert_eq!(lexer.next_token(), Token::LeftParen);
+        assert_eq!(lexer.next_token(), Token::Integer(3));
+        assert_eq!(lexer.next_token(), Token::RightParen);
+    }
+
+    #[test]
+    fn test_illegal_characters() {
+        let input = "1 & @";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(lexer.next_token(), Token::Integer(1));
+        assert_eq!(lexer.next_token(), Token::Illegal(b'&'));
+        assert_eq!(lexer.next_token(), Token::Illegal(b'@'));
+        assert_eq!(lexer.next_token(), Token::EOF);
+    }
+
+    #[test]
+    fn test_whitespace_handling() {
+        let input = "   42  \n \t  + 7 ";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(lexer.next_token(), Token::Integer(42));
+        assert_eq!(lexer.next_token(), Token::Plus);
+        assert_eq!(lexer.next_token(), Token::Integer(7));
+        assert_eq!(lexer.next_token(), Token::EOF);
+    }
+}
