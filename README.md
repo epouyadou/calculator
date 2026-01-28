@@ -14,7 +14,7 @@ Ensure you have [Rust](https://www.rust-lang.org/) installed.
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/epouyadou/calculator.git](https://github.com/epouyadou/calculator.git)
+   git clone https://github.com/epouyadou/calculator.git
    cd calculator
    ```
 
