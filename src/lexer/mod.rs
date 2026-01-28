@@ -1,16 +1,6 @@
+pub mod token;
 
-pub enum Token {
-    Integer(i64),
-    Float(f64),
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    LeftParen,
-    RightParen,
-    EOF,
-    Illegal(u8),
-}
+use crate::lexer::token::Token;
 
 pub struct Lexer<'a> {
     source: &'a [u8],
@@ -31,10 +21,6 @@ impl<'a> Lexer<'a> {
 
     fn peek_byte(&self, distance: usize) -> Option<u8> {
         self.source.get(self.pos + distance).cloned()
-    }
-
-    fn is_at_end(&self) -> bool {
-        self.pos >= self.source.len()
     }
 
     fn advance(&mut self) {
